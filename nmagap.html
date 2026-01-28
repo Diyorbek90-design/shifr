@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maxsus Shifrlash V2</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .translator-container { width: 950px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #ddd; }
+        .top-bar { display: flex; align-items: center; background: #fff; padding: 15px 25px; gap: 15px; border-bottom: 1px solid #eee; }
+        .lang-select { color: #1a73e8; font-weight: 600; font-size: 16px; min-width: 160px; text-align: center; }
+        .swap-btn { background: #f8f9fa; border: 1px solid #dee2e6; cursor: pointer; padding: 10px; border-radius: 50%; display: flex; align-items: center; transition: 0.3s; }
+        .swap-btn:hover { background-color: #e9ecef; transform: rotate(180deg); }
+        .main-content { display: flex; min-height: 380px; }
+        .input-section, .output-section { flex: 1; padding: 25px; position: relative; }
+        .input-section { border-right: 1px solid #eee; }
+        .output-section { background-color: #f8f9fa; }
+        textarea { width: 100%; height: 100%; border: none; outline: none; font-size: 22px; resize: none; background: transparent; color: #3c4043; }
+        .output-text { font-size: 22px; color: #1a73e8; font-weight: 500; white-space: pre-wrap; word-break: break-all; }
+        .placeholder { color: #70757a; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="translator-container">
+    <div class="top-bar">
+        <div class="lang-select" id="labelLeft">Oddiy matn</div>
+        <button class="swap-btn" onclick="swap()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#5f6368"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"></path></svg>
+        </button>
+        <div class="lang-select" id="labelRight">Shifrlangan kod</div>
+    </div>
+
+    <div class="main-content">
+        <div class="input-section">
+            <textarea id="userInput" placeholder="Matnni kiriting..." oninput="convert()"></textarea>
+        </div>
+        <div class="output-section">
+            <div id="resultDisplay" class="output-text placeholder">Natija bu yerda chiqadi...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // To'ldirilgan lug'at: m=n20, n=v24 qo'shildi (bo'sh qolgan raqamlardan foydalanildi)
+    const encodeMap = {
+        'a':'b8','b':'d9','c':'f10','d':'l1','e':'x7','f':'j15','g':'p2','h':'k5','i':'q26','j':'w18',
+        'k':'s9','l':'e9','m':'n20','n':'v24','o':'t16','p':'u3','q':'z17','r':'a13','s':'c25','t':'y22',
+        'u':'b21','v':'h6','w':'g12','x':'o4','y':'r11','z':'i14',
+        '1':'<','2':'>','3':'?','4':']','5':')','6':'==','7':'(','8':'[','9':'&','0':'!',
+        ' ':'_' // Bo'shliq o'rniga pastki chiziq
+    };
+
+    // Teskari lug'at
+    const decodeMap = {};
+    for(let key in encodeMap) { decodeMap[encodeMap[key]] = key; }
+
+    let isEncryptMode = true;
+
+    function swap() {
+        isEncryptMode = !isEncryptMode;
+        document.getElementById('labelLeft').innerText = isEncryptMode ? "Oddiy matn" : "Shifrlangan kod";
+        document.getElementById('labelRight').innerText = isEncryptMode ? "Shifrlangan kod" : "Oddiy matn";
+        document.getElementById('userInput').value = "";
+        const res = document.getElementById('resultDisplay');
+        res.innerText = "Natija bu yerda chiqadi...";
+        res.classList.add('placeholder');
+    }
+
+    function convert() {
+        const input = document.getElementById('userInput').value.toLowerCase();
+        const display = document.getElementById('resultDisplay');
+        let result = "";
+
+        if (!input) {
+            display.innerText = "Natija bu yerda chiqadi...";
+            display.classList.add('placeholder');
+            return;
+        }
+        display.classList.remove('placeholder');
+
+        if (isEncryptMode) {
+            // Shifrlash (harflarni yopishtirib yozish)
+            for (let char of input) {
+                result += encodeMap[char] || char;
+            }
+        } else {
+            // Deshifrlash (kodlar uzunligi har xil bo'lgani uchun tahlil qilish)
+            let i = 0;
+            while (i < input.length) {
+                let found = false;
+                // Eng uzun koddan boshlab qidirish (shifrlangan kodlar 1 tadan 3 tagacha belgi bo'lishi mumkin)
+                for (let len = 3; len >= 1; len--) {
+                    let part = input.substr(i, len);
+                    if (decodeMap[part]) {
+                        result += decodeMap[part];
+                        i += len;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    result += input[i];
+                    i++;
+                }
+            }
+        }
+        display.innerText = result;
+    }
+</script>
+
+</body>
+</html>
